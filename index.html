@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Taquería Mi Pueblita</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #1a202c; /* Dark background */
+        }
+        .scrollable-list {
+            /* Permite que la lista de productos ocupe el espacio restante y se pueda desplazar */
+            max-height: calc(100vh - 80px); 
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 min-h-screen p-2 flex flex-col items-center text-gray-200">
+
+    <div class="flex justify-between items-center w-full px-2 **py-4** sticky top-0 bg-slate-800 z-10">
+        <button id="back-btn" class="bg-slate-700 text-gray-300 font-semibold py-2 px-4 rounded-full shadow-md hover:bg-slate-600 transition-colors duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-opacity-50 hidden">
+            Volver
+        </button>
+        <div id="app-title" class="flex flex-col items-center text-center">
+             <img src="https://i.postimg.cc/sMpCc5p7/Screenshot-1.jpg" alt="Logotipo Taquería Mi Pueblita" class="**h-16 w-16** mb-1 rounded-full border-2 border-teal-500"> 
+            <h1 class="**text-3xl** font-bold text-teal-400">Taquería</h1>
+            <h1 class="**text-xl** font-bold text-teal-400">Mi Pueblita</h1>
+        </div>
+        <button id="view-list-btn" class="bg-slate-700 text-gray-300 font-semibold py-2 px-4 rounded-full shadow-md hover:bg-slate-600 transition-colors duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-opacity-50">
+            Ver mi lista
+        </button>
+    </div>
+
+    <div class="bg-slate-800 rounded-3xl shadow-xl p-4 w-full max-w-2xl mt-2 md:mt-4 border border-slate-700 **pt-32**">
+        
+        <div id="products-screen">
+            <div id="category-buttons-container" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                </div>
+
+            <div id="product-list-container" class="scrollable-list">
+                </div>
+        </div>
+        
+        <div id="list-screen" class="hidden">
+            <div id="my-list" class="space-y-3">
+                </div>
+            <div id="empty-list-message" class="text-center text-slate-500 mt-4 hidden">
+                <p>Tu lista está vacía.</p>
+            </div>
+
+            <div class="mt-8 text-center">
+                <button id="send-list-btn" class="bg-teal-500 text-white font-semibold py-3 px-6 rounded-full shadow-md hover:bg-teal-600 transition-colors duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-opacity-50">
+                    Enviar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const categories = {
+            'MERCADO': ['Cebolla', 'Tomate', 'Tomatillo', 'Papa', 'Piña', 'Naranja', 'Aguacate', 'Limón', 'Cilantro', 'Melón', 'Jalapeño', 'Habanero', 'Morrón'],
+            // Se eliminó 'Q. amarillo' de ABARROTES y se añadió a QUESOS
+            'ABARROTES': ['Jamaica', 'Avena', 'Chile de árbol', 'Consomé', 'Almendra', 'Pimienta molida', 'Canela entera', 'Canela molida', 'Palillos', 'Sal', 'Popote corto', 'Popote largo', 'Charola #855', 'Charolas #2', 'Charola #066', 'Contenedor8x8', 'Contenedor7x7', 'Aza chica', 'aza mediana', 'Bolsa 8x22', 'Bolsa 15x25', 'Bolsa 20x30', 'Bolsa 25x35', 'Bolsa 60x90', 'Ajos', 'MOLDES P/PAPA CON TAPAS', 'Moldes p/ Pay', 'vainilla', 'Aceite', 'Cepillo ropa', 'Piedras', 'V manzana', 'Botella Litro', 'Botella medio', 'Hamburgeseros'],
+            // CATEGORÍAS AÑADIDAS
+            'QUESOS': ['Tocino', 'Jamón', 'Q. amarillo'], // Nueva categoría QUESOS
+            'NOTA': ['Escribir Nota'], // Nueva categoría NOTA (Texto libre)
+            // FIN DE CATEGORÍAS AÑADIDAS
+            'CITY CLUB': ['Clavel', 'Lechera', 'Deliciosa', 'Mantequilla', 'Crema', 'Champiñones', 'Jabón de manos', 'Barra mesa', 'Inter doblada', 'Papel de baño', 'Pan', 'Totopos', 'Arcoíris', 'Salvo liquido', 'Salvo polvo', 'Bolsa de basura', 'Tenedor', 'Aceite de oliva', 'Vinagre blanco', 'Azúcar', 'Desengrasante', 'Tortilla Harina', 'Jugo Mággi', 'Gel antibacterial', 'Pastillas para baños', 'ROKALETA', 'PICA FRESAS', 'HUEVO KINDER NIÑA Y NIÑO', 'FERRERO', 'SKWINKLES', 'MAZAPAN', 'BUBULUBU', 'LUCAS MUECA', 'TRIDENT AZUL'],
+            'PRODUCTOS EXTRA': ['Piedras', 'Fibra inoxidable', 'Cloro', 'Fabuloso', 'Fibras p/trastes', 'Jergas', 'Limpia vidrios', 'Mostacero', 'Espátulas', 'Escoba', 'Trapeador', 'Jalador', 'Grapas', 'Periodico', 'COCA 600 ML', 'Vaso ½ litro', 'Vaso #12', 'ALUMINIO', 'MANDIL', 'GOMAS PA´ TARIMAS', 'HIELO', 'AGUA NAT', 'VASO 1L', 'Recogedor', 'Productos No Comunes', 'COLOR', 'MARINADO', 'TELA PARA HORCHATA', 'ROLLO 80X80', 'Rollo terminal', 'Atrapamoscas', 'Trón', 'ATOMIZADOR', 'TAPAS 1 LITRO']
+        };
+
+        const categoryEmojis = {
+            'MERCADO': '🍎',
+            'ABARROTES': '🛒',
+            // EMOJIS AÑADIDOS
+            'QUESOS': '🧀',
+            'NOTA': '📝',
+            // FIN DE EMOJIS AÑADIDOS
+            'CITY CLUB': '🏬',
+            'PRODUCTOS EXTRA': '📦'
+        };
+
+        let myShoppingList = JSON.parse(localStorage.getItem('myShoppingList')) || [];
+        let previousScreen = 'products-screen';
+        let lastViewedCategory = null;
+
+        const appTitle = document.getElementById('app-title');
+        const categoryButtonsContainer = document.getElementById('category-buttons-container');
+        const viewListBtn = document.getElementById('view-list-btn');
+        const backBtn = document.getElementById('back-btn');
+        const productListContainer = document.getElementById('product-list-container');
+        const myListContainer = document.getElementById('my-list');
+        const emptyListMessage = document.getElementById('empty-list-message');
+        const sendListBtn = document.getElementById('send-list-btn');
+        const productsScreen = document.getElementById('products-screen');
+        const listScreen = document.getElementById('list-screen');
+        
+        // Function to save the list to localStorage
+        const saveList = () => {
+            localStorage.setItem('myShoppingList', JSON.stringify(myShoppingList));
+        };
+
+        // Function to render the shopping list
+        const renderMyList = () => {
+            myListContainer.innerHTML = '';
+            if (myShoppingList.length === 0) {
+                emptyListMessage.classList.remove('hidden');
+            } else {
+                emptyListMessage.classList.add('hidden');
+                myShoppingList.forEach((item, index) => {
+                    const listItem = document.createElement('div');
+                    listItem.className = 'flex items-center justify-between bg-slate-700 rounded-lg p-3 shadow-md border border-slate-600';
+                    
+                    const contentContainer = document.createElement('div');
+                    contentContainer.className = 'flex flex-col';
+
+                    const itemText = document.createElement('span');
+                    itemText.className = 'text-xl font-bold text-gray-200';
+                    itemText.textContent = item.name;
+
+                    const detailsText = document.createElement('span');
+                    detailsText.className = 'text-sm text-gray-400';
+                    let unitText = item.unit;
+
+                    // Lógica para productos normales
+                    if (item.unit !== 'nota') { 
+                        if (item.quantity > 1) {
+                            if (unitText === 'bulto') unitText = 'bultos';
+                            else if (unitText === 'caja') unitText = 'cajas';
+                            else if (unitText === 'rollo') unitText = 'rollos';
+                            else if (unitText === 'pieza') unitText = 'piezas';
+                            else if (unitText === 'kg') unitText = 'kg';
+                        } else if (item.quantity == 1) {
+                            if (unitText === 'kg') unitText = 'kg';
+                        }
+                        detailsText.textContent = `${item.quantity} ${unitText}`;
+                        contentContainer.appendChild(detailsText);
+                        itemText.textContent = item.name; // Asegura que el nombre es el del producto
+                    } else {
+                         // Lógica para NOTA
+                        const noteContent = document.createElement('span');
+                        noteContent.className = 'text-sm text-gray-400 whitespace-pre-wrap'; // Permite saltos de línea
+                        noteContent.textContent = item.quantity;
+                        itemText.textContent = 'Nota:'; // Muestra "Nota:"
+                        contentContainer.appendChild(noteContent);
+                    }
+                    
+                    const deleteButton = document.createElement('button');
+                    deleteButton.className = 'text-red-400 hover:text-red-500 transition-colors duration-200 transform hover:scale-110';
+                    deleteButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
+                                                  <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm6 0a1 1 0 112 0v6a1 1 0 11-2 0V8z" clip-rule="evenodd" />
+                                              </svg>`;
+                    deleteButton.onclick = () => {
+                        myShoppingList.splice(index, 1);
+                        saveList();
+                        renderMyList();
+                    };
+                    
+                    contentContainer.appendChild(itemText);
+                    listItem.appendChild(contentContainer);
+                    listItem.appendChild(deleteButton);
+                    myListContainer.appendChild(listItem);
+                });
+            }
+        };
+
+        // Function to render the products for a selected category
+        const renderProducts = (categoryName) => {
+            productListContainer.innerHTML = '';
+            if (!categoryName) return;
+            lastViewedCategory = categoryName;
+
+            const products = categories[categoryName];
+            const units = ['kg', 'caja', 'bulto', 'rollo', 'pieza'];
+
+            products.forEach(product => {
+                const productItem = document.createElement('div');
+                productItem.className = 'flex flex-col p-3 rounded-lg bg-slate-700 shadow-md mb-3';
+                
+                // Product name
+                const productNameSpan = document.createElement('span');
+                productNameSpan.textContent = product;
+                productNameSpan.className = 'text-lg text-gray-300 font-medium mb-2';
+                productItem.appendChild(productNameSpan);
+
+                // Lógica para NOTA
+                if (categoryName === 'NOTA') {
+                    // Área de texto
+                    const textArea = document.createElement('textarea');
+                    textArea.id = `note-text`;
+                    textArea.className = 'bg-slate-800 text-gray-300 border border-slate-600 rounded-md px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-teal-500 w-full resize-none';
+                    textArea.placeholder = 'Escribe tu nota o producto aquí...';
+                    textArea.rows = 3;
+                    productItem.appendChild(textArea);
+
+                    // Botón de Añadir Nota
+                    const addButton = document.createElement('button');
+                    addButton.textContent = 'Añadir Nota';
+                    addButton.className = 'mt-2 bg-teal-500 text-white font-semibold py-3 rounded-full shadow-md hover:bg-teal-600 transition-colors duration-200 w-full';
+                    
+                    // Event listener para agregar a la lista
+                    addButton.onclick = () => {
+                        const noteText = textArea.value.trim();
+
+                        if (!noteText) {
+                            return;
+                        }
+
+                        // El "name" es un placeholder, "quantity" es el texto y "unit" es 'nota'
+                        myShoppingList.push({ name: 'Nota', quantity: noteText, unit: 'nota' });
+                        
+                        saveList();
+                        renderMyList();
+                        textArea.value = ''; // Limpiar el área de texto
+                    };
+
+                    productItem.appendChild(addButton);
+                } else {
+                    // Productos regulares (Dropdowns de Cantidad y Unidad)
+
+                    // Contenedor para los dropdowns
+                    const dropdownsContainer = document.createElement('div');
+                    dropdownsContainer.className = 'flex flex-col md:flex-row gap-2 w-full';
+                    
+                    // Dropdown de Cantidad
+                    const quantitySelect = document.createElement('select');
+                    quantitySelect.id = `quantity-${product}`;
+                    quantitySelect.className = 'bg-slate-800 text-gray-300 border border-slate-600 rounded-md px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-teal-500 w-full md:w-1/2';
+                    
+                    const quantityPlaceholder = document.createElement('option');
+                    quantityPlaceholder.value = '';
+                    quantityPlaceholder.textContent = 'Cantidad';
+                    quantityPlaceholder.disabled = true;
+                    quantityPlaceholder.selected = true;
+                    quantitySelect.appendChild(quantityPlaceholder);
+
+                    for (let i = 1; i <= 100; i++) {
+                        const option = document.createElement('option');
+                        option.value = i;
+                        option.textContent = i;
+                        quantitySelect.appendChild(option);
+                    }
+
+                    // Dropdown de Unidad
+                    const unitSelect = document.createElement('select');
+                    unitSelect.id = `unit-${product}`;
+                    unitSelect.className = 'bg-slate-800 text-gray-300 border border-slate-600 rounded-md px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-teal-500 w-full md:w-1/2';
+                    
+                    const unitPlaceholder = document.createElement('option');
+                    unitPlaceholder.value = '';
+                    unitPlaceholder.textContent = 'Seleccionar';
+                    unitPlaceholder.disabled = true;
+                    unitPlaceholder.selected = true;
+                    unitSelect.appendChild(unitPlaceholder);
+
+                    units.forEach(unit => {
+                        const option = document.createElement('option');
+                        option.value = unit;
+                        option.textContent = unit;
+                        unitSelect.appendChild(option);
+                    });
+                    
+                    // Botón de Añadir
+                    const addButton = document.createElement('button');
+                    addButton.textContent = 'Añadir';
+                    addButton.className = 'mt-2 bg-teal-500 text-white font-semibold py-3 rounded-full shadow-md hover:bg-teal-600 transition-colors duration-200 w-full';
+                    
+                    // Event listener para agregar a la lista
+                    addButton.onclick = () => {
+                        const quantity = quantitySelect.value;
+                        const unit = unitSelect.value;
+
+                        if (!quantity || !unit) {
+                            return;
+                        }
+
+                        const existingItemIndex = myShoppingList.findIndex(item => item.name === product);
+                        
+                        if (existingItemIndex !== -1) {
+                            myShoppingList[existingItemIndex].quantity = quantity;
+                            myShoppingList[existingItemIndex].unit = unit;
+                        } else {
+                            myShoppingList.push({ name: product, quantity: quantity, unit: unit });
+                        }
+                        saveList();
+                        renderMyList();
+                        productItem.classList.add('hidden');
+                    };
+
+                    dropdownsContainer.appendChild(quantitySelect);
+                    dropdownsContainer.appendChild(unitSelect);
+
+                    productItem.appendChild(dropdownsContainer);
+                    productItem.appendChild(addButton);
+                }
+                
+                productListContainer.appendChild(productItem);
+            });
+        };
+        
+        // Function to populate the category dropdown and emoji buttons
+        const populateCategories = () => {
+            const categoryNames = Object.keys(categories);
+            categoryNames.forEach(name => {
+                // Create emoji button
+                const button = document.createElement('button');
+                button.className = 'flex flex-col items-center justify-center p-4 bg-slate-700 rounded-xl shadow-lg transition-transform transform hover:scale-105';
+                button.innerHTML = `<span class="text-3xl">${categoryEmojis[name]}</span><span class="mt-2 text-sm text-center font-medium">${name}</span>`;
+                button.onclick = () => {
+                    renderProducts(name);
+                    appTitle.classList.add('hidden');
+                    categoryButtonsContainer.classList.add('hidden');
+                    backBtn.classList.remove('hidden');
+                };
+                categoryButtonsContainer.appendChild(button);
+            });
+        };
+
+        // Event listeners for screen navigation
+        viewListBtn.addEventListener('click', () => {
+            productsScreen.classList.add('hidden');
+            listScreen.classList.remove('hidden');
+            appTitle.classList.add('hidden');
+            backBtn.classList.remove('hidden');
+            renderMyList();
+        });
+
+        backBtn.addEventListener('click', () => {
+            // Check if we are currently on the shopping list screen
+            if (!listScreen.classList.contains('hidden')) {
+                // If we came from a category, go back to that category's product list
+                if (lastViewedCategory) {
+                    listScreen.classList.add('hidden');
+                    productsScreen.classList.remove('hidden');
+                    // Render the products for the last viewed category
+                    renderProducts(lastViewedCategory);
+                    appTitle.classList.add('hidden');
+                    categoryButtonsContainer.classList.add('hidden');
+                    backBtn.classList.remove('hidden');
+                } else {
+                    // If we came from the main screen, go back to the main screen.
+                    listScreen.classList.add('hidden');
+                    productsScreen.classList.remove('hidden');
+                    appTitle.classList.remove('hidden');
+                    categoryButtonsContainer.classList.remove('hidden');
+                    backBtn.classList.add('hidden');
+                }
+            } else {
+                // We are on a category product list. Go back to the main screen.
+                productsScreen.classList.remove('hidden');
+                appTitle.classList.remove('hidden');
+                categoryButtonsContainer.classList.remove('hidden');
+                backBtn.classList.add('hidden');
+                productListContainer.innerHTML = '';
+                lastViewedCategory = null; // Reset last viewed category
+            }
+        });
+
+        // Event listener for the "Send List" button
+        sendListBtn.addEventListener('click', () => {
+            if (myShoppingList.length > 0) {
+                let listText = 'Mi Lista de Compras:\n\n';
+                
+                const orderedCategories = Object.keys(categories);
+
+                // Separa notas de productos
+                const notes = myShoppingList.filter(item => item.unit === 'nota');
+                const products = myShoppingList.filter(item => item.unit !== 'nota');
+
+                orderedCategories.forEach(categoryName => {
+                    // Filtra solo los elementos que son productos "reales" de la categoría
+                    const itemsInThisCategory = products.filter(item => 
+                        categories[categoryName] && categories[categoryName].includes(item.name)
+                    );
+                    
+                    if (itemsInThisCategory.length > 0) {
+                        listText += `*${categoryName}*\n`;
+                        itemsInThisCategory.forEach(item => {
+                            let unitText = item.unit;
+                            if (item.quantity > 1) {
+                                if (unitText === 'bulto') unitText = 'bultos';
+                                else if (unitText === 'caja') unitText = 'cajas';
+                                else if (unitText === 'rollo') unitText = 'rollos';
+                                else if (unitText === 'pieza') unitText = 'piezas';
+                                else if (unitText === 'kg') unitText = 'kg';
+                            }
+                            listText += `• (${item.quantity} ${unitText}) ${item.name}\n`;
+                        });
+                        listText += '\n'; 
+                    }
+                });
+                
+                // Agrega las notas al final de la lista
+                if (notes.length > 0) {
+                    listText += `*NOTAS ADICIONALES*\n`;
+                    notes.forEach(note => {
+                        // En este caso, 'quantity' es el texto libre de la nota.
+                        listText += `• ${note.quantity}\n`;
+                    });
+                    listText += '\n';
+                }
+
+                const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(listText)}`;
+                window.open(whatsappUrl, '_blank');
+            }
+            
+            // Vaciar y limpiar la lista después de enviar
+            myShoppingList = [];
+            localStorage.removeItem('myShoppingList');
+            renderMyList();
+            listScreen.classList.add('hidden');
+            productsScreen.classList.remove('hidden');
+            
+            appTitle.classList.remove('hidden');
+            categoryButtonsContainer.classList.remove('hidden');
+            backBtn.classList.add('hidden');
+        });
+        
+        // Initial rendering on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            populateCategories();
+            renderMyList();
+        });
+    </script>
+</body>
+</html>
